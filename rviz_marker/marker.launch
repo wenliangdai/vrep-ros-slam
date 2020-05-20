@@ -1,0 +1,3 @@
+<launch>
+  <node pkg="rviz_marker" type="main.py" name="rviz_marker"></node>
+</launch>

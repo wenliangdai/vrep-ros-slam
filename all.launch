@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+  <include file="$(find opencv_detector)/launch/face_detection.launch"/>
+  <include file="$(find rviz_marker)/marker.launch"/>
+  <include file="$(find project)/launch/hector.launch"/>
+  <node pkg="visual_servo" type="follow_ball" name="followBall_node" output="screen"/>
+  <node pkg="project" type="key_teleop.py" name="key_teleop" output="screen" launch-prefix="xterm -e"/>
+</launch>
