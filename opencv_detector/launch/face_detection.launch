@@ -1,14 +1,14 @@
 <launch>
   <arg name="image_topic" default="/vrep/image"/>
-  <arg name="detection_topic" default="/facedetector/faces" />
-  <arg name="toggle_topic"  default="/facedetector/toggle" />
+  <arg name="detection_topic" default="/facedetector/faces"/>
+  <arg name="toggle_topic"  default="/facedetector/toggle"/>
 
   <node pkg="opencv_detector" type="detector.py" name="facedetector" output="screen">
-    <remap from="camera" to="$(arg image_topic)" />
-    <remap from="detections" to="$(arg detection_topic)" />
-    <remap from="toggle" to="$(arg toggle_topic)" />
+    <remap from="camera" to="$(arg image_topic)"/>
+    <remap from="detections" to="$(arg detection_topic)"/>
+    <remap from="toggle" to="$(arg toggle_topic)"/>
     <param name="detector_file" value="$(find opencv_detector)/data/haarcascade_face.xml"/>
     <param name="recognition_folder" value="$(find opencv_detector)/recognition-targets"/>
-    <param name="show_cv_window" type="bool" value="true" />
+    <param name="show_cv_window" type="bool" value="true"/>
   </node>
 </launch>

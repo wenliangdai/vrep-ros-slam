@@ -29,35 +29,35 @@ class RvizImageMarker():
             3: None,
             4: None
         }
-        
+
         # Constant value from camera & laser scan calibration
         self.MIN_DEGREE = 247.5
         self.MIN_VISUAL_RGB_INDEX = 0
         self.MIN_VISUAL_DEPTH_INDEX = 340
-        
+
         self.VISUAL_RGB_RANGE = 512
-        self.VISUAL_DEGREE_RANGE = 45        
+        self.VISUAL_DEGREE_RANGE = 45
         self.VISUAL_DEPTH_RANGE = 220
-        
+
         self.MAX_DEGREE = 292.5
         self.MAX_VISUAL_RGB_INDEX = 512
         self.MAX_VISUAL_DEPTH_INDEX = 560
-        
+
         self.DEPTH_DATA_RANGE = 902
-        
+
         # Define room border
         self.B_MIN_X = -3.5
         self.B_MAX_X = 5.0
-        
-        self.B_MIN_Y = -6.5        
+
+        self.B_MIN_Y = -6.5
         self.B_MAX_Y = -3.5
-        
+
         # Init buffer
         self.depth_data = np.zeros(self.DEPTH_DATA_RANGE)
         self.position = Point(0.0, 0.0, 0.0)
         self.orientation = Quaternion(0.0, 0.0, 0.0, 1.0)
         self.is_moving = False
-        
+
         # Init publisher
         self.marker_pub = rospy.Publisher('visualization_marker_array', MarkerArray, queue_size=0)
 
@@ -79,9 +79,9 @@ class RvizImageMarker():
             return 'ROOM B'
         else:
             return 'UNKNOWN'
-        
+
     # Position transform function
-    def extract_global_position(self, cam_pos_x):        
+    def extract_global_position(self, cam_pos_x):
         # Convert camera position to relative polar coordinate of robot
         depth_index = self.MIN_VISUAL_DEPTH_INDEX + int(float(cam_pos_x) * self.VISUAL_DEPTH_RANGE / self.VISUAL_RGB_RANGE)
         depth = self.depth_data[depth_index]
@@ -96,20 +96,20 @@ class RvizImageMarker():
         rel_pos_y = depth * np.sin(np.deg2rad(degree))
         obj_vec = np.array([rel_pos_x, rel_pos_y, 0, 1])
 
-        # Convert cartesian coordinate to absolute cartesian coordinate     
+        # Convert cartesian coordinate to absolute cartesian coordinate
         rot_mat_robot = quat2mat([self.orientation.w, self.orientation.x, self.orientation.y, self.orientation.z])
         trans_mat_robot = compose(np.array([self.position.x, self.position.y, self.position.z]), rot_mat_robot, np.ones(3))
 
         # Perform transformation
         pos_x, pos_y, pos_z = np.dot(trans_mat_robot, obj_vec)[:3]
-        
+
         return pos_x, pos_y
-        
+
     # Marking function
     def mark_with_label(self, pos_x, pos_y, label):
         index = self.label2id[label]
         markers = []
-        
+
         # Text label
         marker = Marker()
         marker.header.frame_id = "map"
@@ -149,9 +149,9 @@ class RvizImageMarker():
         marker.pose.position.y = pos_y
         marker.pose.position.z = 0.5
         markers.append(marker)
-    
+
         return markers
-    
+
     ###
     # Callback
     ###
@@ -165,11 +165,11 @@ class RvizImageMarker():
             self.is_moving = False
         else:
             self.is_moving = True
-        
+
         # Update position
         self.position = data.pose.position
         self.orientation = data.pose.orientation
-        
+
         # Update room text in Rviz
         room = self.get_room()
         marker = Marker()
@@ -189,11 +189,11 @@ class RvizImageMarker():
         marker.pose.position.y = self.position.y
         marker.pose.position.z = 1.0
         marker.text = room
-        
+
         marker_array = MarkerArray()
         marker_array.markers.append(marker)
-        self.marker_pub.publish(marker_array)  
-        
+        self.marker_pub.publish(marker_array)
+
     def laser_scan_callback(self, data):
         x_ranges = data.ranges
         self.depth_data = np.array(x_ranges)
@@ -205,20 +205,20 @@ class RvizImageMarker():
         if confidence >= 70 and not self.is_moving:
             pos_x, pos_y = self.extract_global_position(cam_pos_x)
             markers = self.mark_with_label(pos_x, pos_y, label)
-            
+
             self.marker_dict[markers[0].id] = markers
             marker_array = MarkerArray()
-            for _, markers, in self.marker_dict.iteritems():   
+            for _, markers, in self.marker_dict.iteritems():
                 if markers:
-                    marker_array.markers.append(markers[0])       
+                    marker_array.markers.append(markers[0])
                     marker_array.markers.append(markers[1])
             self.marker_pub.publish(marker_array)
 
-# Main function.    
+# Main function.
 if __name__ == '__main__':
     # Initialize the node and name it.
     rospy.init_node('rviz_image_marker')
     try:
         fd = RvizImageMarker()
-        rospy.spin()    
+        rospy.spin()
     except rospy.ROSInterruptException: pass
